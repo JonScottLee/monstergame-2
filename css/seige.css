@@ -1,0 +1,59 @@
+body {
+	padding: 30px;
+}
+	#fight--monster {
+		margin-bottom: 20px;
+	}
+	.msg--monster-defeated {
+		margin-top: 12px;
+	}
+	.monster-info {
+		margin: 0 0 10px;
+	}
+	.monster__name {
+		display: inline-block;
+		font-weight: bold;
+		margin: 0 10px 0 0;
+	}
+	.hit-type--crit {
+		font-weight: bold;
+		font-size: 24px;
+	}
+	#player-info--hp {
+		margin-bottom: 20px;
+	}
+	#monster-info--hp {
+		display: none;
+	}
+
+/*--------------*/
+/* Progress Bar */
+/*--------------*/
+.progress-bar {
+    width: 354px;
+    height: 22px;
+    border: 1px solid #111;
+}
+ 
+.progress-bar div {
+    height: 100%;
+    color: #fff;
+    text-align: right;
+    line-height: 22px; /* same as #progressBar height if we want text middle aligned */
+    width: 0;
+}
+
+/* Player */
+.progress-bar--player {
+	background-color: #292929;
+}
+	.progress-bar--player div {
+		background-color: #0099ff;
+	}
+.progress-bar--monster {
+	background-color: #292929;
+	margin-bottom: 30px;
+}
+	.progress-bar--monster div {
+		background-color: red;
+	}
