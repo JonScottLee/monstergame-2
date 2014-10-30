@@ -1,7 +1,9 @@
 body {
-	padding: 30px;
+	padding: 50px 30px 30px;
 }
-	#fight--monster {
+	#fight--monster,
+	#fight--attack,
+	#fight--cast {
 		margin-bottom: 20px;
 	}
 	.msg--monster-defeated {
@@ -17,12 +19,21 @@ body {
 	}
 	.hit-type--crit {
 		font-weight: bold;
-		font-size: 24px;
+		font-size: 20px;
+	}
+	.hit-type--eviscerate {
+		font-weight: bold;
+		font-size: 22px;
+		text-shadow: 1px 1px 2px red;
 	}
 	#player-info--hp {
 		margin-bottom: 20px;
 	}
 	#monster-info--hp {
+		display: none;
+	}
+	#fight--attack,
+	#fight--cast {
 		display: none;
 	}
 
@@ -57,3 +68,22 @@ body {
 	.progress-bar--monster div {
 		background-color: red;
 	}
+.progress-bar--exp {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	background-color: #fff;
+}
+	.progress-bar--exp div {
+		background-color: orange;
+	}
+	.exp-bar__label {
+		font-weight: bold;
+		position: absolute;
+		left: 50%;
+	}
+
+.shake {
+	width: 100%;
+}
