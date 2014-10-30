@@ -5,71 +5,30 @@ heroGame.utilities = (function () {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    function progress(percent, $element, animSpeed) {
-        var speed = animSpeed ? animSpeed : 50;
-        var progressBarWidth = percent * $element.width() / 100;
-        $element.find('div').animate({ width: progressBarWidth }, speed).html(percent + "%&nbsp;");
-    };
-
-    return {
-        getRandomInt : getRandomInt,
-        progress : progress
-    }
-})();
-
-heroGame.fight = (function () {
-    var updateFrequencey = 400;
-
-    function appendMonsterInfo (monster) {
-        var monsterInfo =
-                '<div class="monster__name">A ' + monster.name + '</div>' +
-                '<span id="monster-info__HP" class="badge badge-red">' + monster.currentHP + '</span>';
-
-        $('#fight-info').empty();
-        $('#monster-info').empty().append(monsterInfo);
-
-        $('#monster-info--hp').show();
-        heroGame.utilities.progress(100, $('.progress-bar--monster'));
-    }
-
-    function monsterFight (hero, monster) {
-        var $fightInfo = $('#fight-info'),
-            heroDMG = heroGame.utilities.getRandomInt(hero.battleStats.minDMG, hero.battleStats.maxDMG),
-            monsterDMG = heroGame.utilities.getRandomInt(monster.battleStats.minDMG, monster.battleStats.maxDMG),
-            EXPEarned = heroGame.utilities.getRandomInt(parseInt(monster.maxHP * .5), 10),
-            hitType = 'hit ';
-
-        appendMonsterInfo(monster);        
-    }
-
-    function fightAction() {
+    function getHitDetails (entity) {
         var hero = $.data(window, 'hero'),
-            monster = $.data(window, 'monster'),
-            $fightInfo = $('#fight-info'),
-            heroDMG = heroGame.utilities.getRandomInt(hero.battleStats.minDMG, hero.battleStats.maxDMG),
-            monsterDMG = heroGame.utilities.getRandomInt(monster.battleStats.minDMG, monster.battleStats.maxDMG),
-            EXPEarned = heroGame.utilities.getRandomInt(parseInt(monster.maxHP * .5), 10),
-            hitType = 'hit ';
+            hitType = 'hit',
+            DMG = parseInt(heroGame.utilities.getRandomInt(entity.battleStats.minDMG, entity.battleStats.maxDMG));
 
         // Check if critical hit && possibly an eviscerate
-        if (Math.floor(Math.random()*100) <= hero.battleStats.crit) {
+        if (entity.type != 'monster' && Math.floor(Math.random()*100) <= entity.battleStats.crit) {
             hitType = '<span class="hit-type--crit">crits!</span> ';
 
-            if (hero.gear.weapon.type == 'sword') hitType = '<span class="hit-type--crit">slice!</span> ';
+            if (entity.gear.weapon.type == 'sword') hitType = '<span class="hit-type--crit">slice!</span> ';
 
-            heroDMG = parseInt(heroGame.utilities.getRandomInt(hero.battleStats.minDMG, hero.battleStats.maxDMG) * 4, 10);
+            DMG = parseInt(heroGame.utilities.getRandomInt(entity.battleStats.minDMG, entity.battleStats.maxDMG) * 4, 10);
 
             // Shake effect
-                $('body').addClass('shake');
-                setTimeout(function () {
-                    $('body').removeClass();
-                }, 175);
+            $('body').addClass('shake');
+            setTimeout(function () {
+                $('body').removeClass();
+            }, 175);
 
             // 10% of time, when user does DMG == to at least half of monster's max HP, do an eviscerate
             // Or, eviscerate at 1/4 crit chance
-            if ((Math.floor(Math.random()*100) <= hero.battleStats.crit / 4) || heroDMG > monster.maxHP * .5 && Math.floor(Math.random()*100) >= 90) {
+            if ((Math.floor(Math.random()*100) <= entity.battleStats.crit / 4)) {
                 hitType = '<span class="hit-type--eviscerate">eviscerate!!</span> ';
-                heroDMG = parseInt(heroGame.utilities.getRandomInt(hero.battleStats.minDMG, hero.battleStats.maxDMG) * 10, 10);
+                DMG = parseInt(heroGame.utilities.getRandomInt(entity.battleStats.minDMG, entity.battleStats.maxDMG) * 10, 10);
 
                 // Shake effect
                 $('body').addClass('shake shake-hard');
@@ -79,30 +38,84 @@ heroGame.fight = (function () {
             }
         }
 
-        $fightInfo
-            .append('<div>' + hero.name + ' ' + hitType + ' ' + monster.name + ' for <b>' + heroDMG + ' damage</b></div>');
+        return {
+            hitType : hitType,
+            DMG : DMG
+        }
+    }
 
-        monster.updateHP(heroDMG);
+    function progress(percent, $element, animSpeed) {
+        var speed = animSpeed ? animSpeed : 50;
+        var progressBarWidth = percent * $element.width() / 100;
+        $element.find('div').animate({ width: progressBarWidth }, speed).html(percent + "%&nbsp;");
+    };
 
-        if (monster.currentHP - heroDMG > 0) {
-            $fightInfo.append('<div style="color: red;">' + monster.name + ' ' + 'hit' + ' ' + hero.name + ' for <b>' + monsterDMG + ' damage</b></div>')
+    return {
+        getRandomInt : getRandomInt,
+        progress : progress,
+        getHitDetails : getHitDetails
+    }
+})();
 
-            monster.currentHP -= heroDMG;
+heroGame.fight = (function () {
 
-            if (monster.currentHP < 0) monster.currentHP = 0;
+    function appendMonsterInfo (hero, monster) {
+        var monsterInfo =
+                '<div class="monster__name">A ' + monster.name + '</div>' +
+                '<span id="monster-info__HP" class="badge badge-red">' + monster.currentHP + '</span>';
 
-            $('#monster-info__HP').text(monster.currentHP);
+        $('#fight-info').empty();
+        $('#monster-info').empty().append(monsterInfo);
 
-            hero.updateHP(monsterDMG);
+        $('#monster-info--hp').show();
+        heroGame.utilities.progress(100, $('.progress-bar--monster')); 
+    }
+
+    function doHeroHit () {
+        var hero = $.data(window, 'hero'),
+            hit = heroGame.utilities.getHitDetails($.data(window, 'hero')),
+            $fightInfo = $('#fight-info');
+
+        $fightInfo.append('<div>' + hero.name + ' ' + hit.hitType + ' ' + $.data(window, 'monster').name + ' for <b>' + hit.DMG + ' damage</b></div>');
+        monster.updateHP(hit.DMG);
+        $('#monster-info__HP').text(monster.currentHP);
+    }
+
+    function doMonsterHit () {
+        var monster = $.data(window, 'monster'),
+            hit = heroGame.utilities.getHitDetails($.data(window, 'monster')),
+            $fightInfo = $('#fight-info');
+
+        $fightInfo.append('<div style="color: red;">' + monster.name + ' ' + 'hit' + ' ' + $.data(window, 'hero').name + ' for <b>' + hit.DMG + ' damage</b></div>');
+        hero.updateHP(hit.DMG);
+    }
+
+    function fightAction() {
+        var hero = $.data(window, 'hero'),
+            monster = $.data(window, 'monster'),
+            EXPEarned = heroGame.utilities.getRandomInt(parseInt(monster.maxHP * .5), 10),
+            $fightInfo = $('#fight-info');
+
+        if (hero.battleStats.speed > monster.battleStats.speed) {
+            doHeroHit();
+            if (monster.currentHP > 0) {
+                doMonsterHit();
+            }
         } else {
-            var killType = (hitType != 'hit ') ? 'slaughtered' : 'killed';
+            doMonsterHit();
+            if (hero.currentHP > 0) {
+                doHeroHit();
+            }
+        }
 
+        if (monster.currentHP <= 0) {
             // Set monster HP gauge to 0
+            monster.currentHP = 0;
             heroGame.utilities.progress(0, $('.progress-bar--monster'));
 
             // Append defeated and EXP messaging
             $fightInfo
-                .append('<p class="msg--monster-defeated" style="color: #2c9f42;">You ' + killType + ' the ' + monster.name + '!</p>')
+                .append('<p class="msg--monster-defeated" style="color: #2c9f42;">You killed the ' + monster.name + '!</p>')
                 .append('<p>EXP earned: ' + EXPEarned);
 
             // Give monster the 'dead' bage
@@ -119,7 +132,7 @@ heroGame.fight = (function () {
                 EXPEarned : EXPEarned,
                 items : ['Sword', 'Ring']
             });
-        }        
+        }
     }
 
     function postBattleActions (loot) {
@@ -130,7 +143,7 @@ heroGame.fight = (function () {
     }
 
     return {
-        monsterFight : monsterFight,
+        appendMonsterInfo : appendMonsterInfo,
         fightAction : fightAction
     }
 
@@ -141,10 +154,11 @@ heroGame.events = (function () {
 
     function Hero () {
         this.name = 'You';
+        this.type = 'player';
         this.age = '15';
         this.level = 1;
         this.EXP = 0;
-        this.EXPCap = this.level * (1000);
+        this.EXPCap = 300;
         this.maxHP = 500;
         this.currentHP = this.maxHP;
         this.esper = {
@@ -156,7 +170,7 @@ heroGame.events = (function () {
             weapon : {
                 name : 'Copper Sword',
                 type : 'sword',
-                dmg : 12,
+                dmg : 1200,
                 description : 'A simple -- yet sturdy -- copper blade. Centuries of warriors have swung the sharp end at myriad foes.'
             },
             armor : {
@@ -182,7 +196,8 @@ heroGame.events = (function () {
         this.battleStats = {
             minDMG : 10 + this.gear.weapon.dmg,
             maxDMG : 23 + this.gear.weapon.dmg,
-            crit : 30 + this.gear.gloves.critBonus
+            crit : 30 + this.gear.gloves.critBonus,
+            speed: 20
         },
         this.abilities = ['Strength', 'Speed', 'Fine Control', 'Berserker', 'Unstable'];
     };
@@ -200,34 +215,41 @@ heroGame.events = (function () {
         updateEXP : function (lootEXP) {
             this.EXP += lootEXP;
 
-            console.info(this.EXP, this.EXPCap);
-
             if (this.EXP >= this.EXPCap) {
-                this.level += 1;
+                this.gainLevel();
                 $('#exp-gauge').find('.exp-gauge__level').text('Level: ' + this.level);
 
-                setTimeout(function () {
-                    heroGame.utilities.progress(100, $('.progress-bar--exp'), 600);
-                }, 10);
+                heroGame.utilities.progress(100, $('.progress-bar--exp'), 600);
             } else {
                 heroGame.utilities.progress(Math.round((this.EXP / this.EXPCap) * 100), $('.progress-bar--exp'), 600);
             }
         },
         gainLevel : function (int) {
+            var levelUpText = $('<span color="green; font-weight: bold">Level Up!</span>').delay(5000);
             this.level += 1;
             this.currentHP = this.maxHP;
             this.EXPCap = this.level * 100;
 
+            $('.exp-bar__label').append(levelUpText);
+
+            // Update bar to full
             heroGame.utilities.progress(100 , $('.progress-bar--player'), 600);
+            // Update EXP bar to 0
+            setTimeout(function () {
+                heroGame.utilities.progress(0, $('.progress-bar--exp'), 600);
+            }, 1000);
+            
         }
     }
 
     function Monster () {
         this.name = 'Green Slime';
+        this.type = 'monster';
         this.level = 15;
         this.battleStats = {
             minDMG : 10,
-            maxDMG : 23
+            maxDMG : 23,
+            speed: 10
         },
         this.maxHP = heroGame.utilities.getRandomInt(this.level * 20, this.level * 40);
         this.currentHP = this.maxHP;
@@ -250,7 +272,7 @@ heroGame.events = (function () {
 
             monster = $.data(window, 'monster', new Monster());
 
-            heroGame.fight.monsterFight(hero, monster);
+            heroGame.fight.appendMonsterInfo(hero, monster);
 
             $('#fight--attack, #fight--cast').fadeIn(100);
         });
