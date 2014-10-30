@@ -73,14 +73,17 @@ body {
 	left: 0;
 	top: 0;
 	width: 100%;
-	background-color: #fff;
+	background-color: #ddd;
+	height: 10px;
 }
 	.progress-bar--exp div {
-		background-color: orange;
+		background-color: lightgreen;
+		font-size: 0;
 	}
 	.exp-bar__label {
 		font-weight: bold;
 		position: absolute;
+		top: 8px;
 		left: 50%;
 	}
 

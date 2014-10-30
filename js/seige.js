@@ -5,9 +5,10 @@ heroGame.utilities = (function () {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    function progress(percent, $element) {
+    function progress(percent, $element, animSpeed) {
+        var speed = animSpeed ? animSpeed : 50;
         var progressBarWidth = percent * $element.width() / 100;
-        $element.find('div').animate({ width: progressBarWidth }, 50).html(percent + "%&nbsp;");
+        $element.find('div').animate({ width: progressBarWidth }, speed).html(percent + "%&nbsp;");
     };
 
     return {
@@ -203,10 +204,10 @@ heroGame.events = (function () {
                 $('#exp-gauge').find('.exp-gauge__level').text('Level: ' + this.level);
 
                 setTimeout(function () {
-                    heroGame.utilities.progress(100, $('.progress-bar--exp'));
+                    heroGame.utilities.progress(100, $('.progress-bar--exp'), 600);
                 }, 10);
             } else {
-                heroGame.utilities.progress(Math.round((this.EXP / this.EXPCap) * 100), $('.progress-bar--exp'));
+                heroGame.utilities.progress(Math.round((this.EXP / this.EXPCap) * 100), $('.progress-bar--exp'), 600);
             }
         },
         gainLevel : function (int) {
@@ -214,7 +215,7 @@ heroGame.events = (function () {
             this.currentHP = this.maxHP;
             this.EXPCap = this.level * 100;
 
-            heroGame.utilities.progress(100 , $('.progress-bar--player'));
+            heroGame.utilities.progress(100 , $('.progress-bar--player'), 600);
         }
     }
 
