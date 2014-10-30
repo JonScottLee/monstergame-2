@@ -80,12 +80,13 @@ heroGame.fight = (function () {
         }
 
         $fightInfo
-            .append('<div>' + hero.name + ' ' + hitType + ' ' + monster.name + ' for <b>' + heroDMG + ' damage</b></div>')
-            .append('<div style="color: red;">' + monster.name + ' ' + 'hit' + ' ' + hero.name + ' for <b>' + monsterDMG + ' damage</b></div>')
+            .append('<div>' + hero.name + ' ' + hitType + ' ' + monster.name + ' for <b>' + heroDMG + ' damage</b></div>');
 
         monster.updateHP(heroDMG);
 
         if (monster.currentHP - heroDMG > 0) {
+            $fightInfo.append('<div style="color: red;">' + monster.name + ' ' + 'hit' + ' ' + hero.name + ' for <b>' + monsterDMG + ' damage</b></div>')
+
             monster.currentHP -= heroDMG;
 
             if (monster.currentHP < 0) monster.currentHP = 0;
