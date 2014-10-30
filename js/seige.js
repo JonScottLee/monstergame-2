@@ -22,7 +22,7 @@ heroGame.fight = (function () {
 
     function appendMonsterInfo (monster) {
         var monsterInfo =
-                '<div class="monster__name">' + monster.name + '</div>' +
+                '<div class="monster__name">A ' + monster.name + '</div>' +
                 '<span id="monster-info__HP" class="badge badge-red">' + monster.currentHP + '</span>';
 
         $('#fight-info').empty();
@@ -37,7 +37,7 @@ heroGame.fight = (function () {
             heroDMG = heroGame.utilities.getRandomInt(hero.battleStats.minDMG, hero.battleStats.maxDMG),
             monsterDMG = heroGame.utilities.getRandomInt(monster.battleStats.minDMG, monster.battleStats.maxDMG),
             EXPEarned = heroGame.utilities.getRandomInt(parseInt(monster.maxHP * .5), 10),
-            hitType = 'hits ';
+            hitType = 'hit ';
 
         appendMonsterInfo(monster);        
     }
@@ -49,13 +49,13 @@ heroGame.fight = (function () {
             heroDMG = heroGame.utilities.getRandomInt(hero.battleStats.minDMG, hero.battleStats.maxDMG),
             monsterDMG = heroGame.utilities.getRandomInt(monster.battleStats.minDMG, monster.battleStats.maxDMG),
             EXPEarned = heroGame.utilities.getRandomInt(parseInt(monster.maxHP * .5), 10),
-            hitType = 'hits ';
+            hitType = 'hit ';
 
         // Check if critical hit && possibly an eviscerate
         if (Math.floor(Math.random()*100) <= hero.battleStats.crit) {
             hitType = '<span class="hit-type--crit">crits!</span> ';
 
-            if (hero.gear.weapon.type == 'sword') hitType = '<span class="hit-type--crit">slices!</span> ';
+            if (hero.gear.weapon.type == 'sword') hitType = '<span class="hit-type--crit">slice!</span> ';
 
             heroDMG = parseInt(heroGame.utilities.getRandomInt(hero.battleStats.minDMG, hero.battleStats.maxDMG) * 4, 10);
 
@@ -68,7 +68,7 @@ heroGame.fight = (function () {
             // 10% of time, when user does DMG == to at least half of monster's max HP, do an eviscerate
             // Or, eviscerate at 1/4 crit chance
             if ((Math.floor(Math.random()*100) <= hero.battleStats.crit / 4) || heroDMG > monster.maxHP * .5 && Math.floor(Math.random()*100) >= 90) {
-                hitType = '<span class="hit-type--eviscerate">eviscerates!</span> ';
+                hitType = '<span class="hit-type--eviscerate">eviscerate!!</span> ';
                 heroDMG = parseInt(heroGame.utilities.getRandomInt(hero.battleStats.minDMG, hero.battleStats.maxDMG) * 10, 10);
 
                 // Shake effect
@@ -81,7 +81,7 @@ heroGame.fight = (function () {
 
         $fightInfo
             .append('<div>' + hero.name + ' ' + hitType + ' ' + monster.name + ' for <b>' + heroDMG + ' damage</b></div>')
-            .append('<div style="color: red;">' + monster.name + ' ' + 'hits' + ' ' + hero.name + ' for <b>' + monsterDMG + ' damage</b></div>')
+            .append('<div style="color: red;">' + monster.name + ' ' + 'hit' + ' ' + hero.name + ' for <b>' + monsterDMG + ' damage</b></div>')
 
         monster.updateHP(heroDMG);
 
@@ -94,12 +94,14 @@ heroGame.fight = (function () {
 
             hero.updateHP(monsterDMG);
         } else {
+            var killType = (hitType != 'hit ') ? 'slaughtered' : 'killed';
+
             // Set monster HP gauge to 0
             heroGame.utilities.progress(0, $('.progress-bar--monster'));
 
             // Append defeated and EXP messaging
             $fightInfo
-                .append('<p class="msg--monster-defeated" style="color: #2c9f42;">' + monster.name + ' is defeated!</p>')
+                .append('<p class="msg--monster-defeated" style="color: #2c9f42;">You ' + killType + ' the ' + monster.name + '!</p>')
                 .append('<p>EXP earned: ' + EXPEarned);
 
             // Give monster the 'dead' bage
@@ -137,7 +139,7 @@ heroGame.fight = (function () {
 heroGame.events = (function () {
 
     function Hero () {
-        this.name = 'Player';
+        this.name = 'You';
         this.age = '15';
         this.level = 1;
         this.EXP = 0;
