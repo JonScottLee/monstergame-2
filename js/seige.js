@@ -5,6 +5,10 @@ heroGame.utilities = (function () {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
+    function getRandomPercent () {
+        return Math.floor(Math.random() * 100);
+    }
+
     function getHitDetails (entity) {
         var hero = $.data(window, 'hero'),
             hitType = 'hit',
@@ -52,6 +56,7 @@ heroGame.utilities = (function () {
 
     return {
         getRandomInt : getRandomInt,
+        getRandomPercent : getRandomPercent,
         progress : progress,
         getHitDetails : getHitDetails
     }
@@ -76,7 +81,7 @@ heroGame.fight = (function () {
             hit = heroGame.utilities.getHitDetails($.data(window, 'hero')),
             $fightInfo = $('#fight-info');
 
-        $fightInfo.append('<div>' + hero.name + ' ' + hit.hitType + ' ' + $.data(window, 'monster').name + ' for <b>' + hit.DMG + ' damage</b></div>');
+        $fightInfo.append('<div class="hit--player">' + hero.name + ' ' + hit.hitType + ' ' + $.data(window, 'monster').name + ' for <b>' + hit.DMG + ' damage</b></div>');
         monster.updateHP(hit.DMG);
         $('#monster-info__HP').text(monster.currentHP);
     }
@@ -86,7 +91,7 @@ heroGame.fight = (function () {
             hit = heroGame.utilities.getHitDetails($.data(window, 'monster')),
             $fightInfo = $('#fight-info');
 
-        $fightInfo.append('<div style="color: red;">' + monster.name + ' ' + 'hit' + ' ' + $.data(window, 'hero').name + ' for <b>' + hit.DMG + ' damage</b></div>');
+        $fightInfo.append('<div class="hit--monster">' + monster.name + ' ' + 'hit' + ' ' + $.data(window, 'hero').name + ' for <b>' + hit.DMG + ' damage</b></div>');
         hero.updateHP(hit.DMG);
     }
 
@@ -97,8 +102,16 @@ heroGame.fight = (function () {
             $fightInfo = $('#fight-info');
 
         if (hero.battleStats.speed > monster.battleStats.speed) {
+            
+            // Double strike!
+            if (heroGame.utilities.getRandomPercent() > 95) {
+                $fightInfo.append('<div class="hit-type--double-strike">You perform a double-strike!</div>')
+                doHeroHit();
+            }
+
             doHeroHit();
-            if (monster.currentHP > 0) {
+
+            if (monster.currentHP > 0 && hero.currentHP > 0) {
                 doMonsterHit();
             }
         } else {
@@ -106,6 +119,20 @@ heroGame.fight = (function () {
             if (hero.currentHP > 0) {
                 doHeroHit();
             }
+        }
+
+        if (hero.currentHP <= 0) {
+            hero.currentHP = 0;
+            heroGame.utilities.progress(0, $('.progress-bar--player'));
+
+            $fightInfo.append('<h4>You died!</h4');
+
+            // Show Resurrection Button
+            $('#resurrect').fadeIn();
+
+            // Hide battle options
+            $('#fight--attack, #fight--cast').hide();
+
         }
 
         if (monster.currentHP <= 0) {
@@ -157,9 +184,9 @@ heroGame.events = (function () {
         this.type = 'player';
         this.age = '15';
         this.level = 1;
-        this.EXP = 0;
+        this.EXP = 100;
         this.EXPCap = 300;
-        this.maxHP = 500;
+        this.maxHP = 50;
         this.currentHP = this.maxHP;
         this.esper = {
             name : 'Bahamut',
@@ -170,7 +197,7 @@ heroGame.events = (function () {
             weapon : {
                 name : 'Copper Sword',
                 type : 'sword',
-                dmg : 1200,
+                dmg : 12,
                 description : 'A simple -- yet sturdy -- copper blade. Centuries of warriors have swung the sharp end at myriad foes.'
             },
             armor : {
@@ -280,13 +307,25 @@ heroGame.events = (function () {
         $('#fight--attack').on('click', function () {
             heroGame.fight.fightAction();
         });
+
+        $('#resurrect').on('click', function () {
+            var hero = $.data(window, 'hero').currentHP = $.data(window, 'hero');
+            
+            hero.currentHP = hero.maxHP;
+            hero.EXP -= parseInt(hero.EXP * .3, 10);
+            heroGame.utilities.progress(100, $('.progress-bar--player'));
+            heroGame.utilities.progress((hero.EXP / hero.EXPCap) * 100, $('.progress-bar--exp'));
+
+            $('#resurrect').fadeOut();
+            $('#fight--monster').trigger('click');
+        });
     }
 
     function setEXP () {
         var hero = $.data(window, 'hero');
 
         $('#exp-gauge').attr('data-exp', hero.EXP);
-        heroGame.utilities.progress(hero.EXP, $('.progress-bar--exp'));
+        heroGame.utilities.progress((hero.EXP / hero.EXPCap) * 100, $('.progress-bar--exp'));
     }
 
     function createhero () {

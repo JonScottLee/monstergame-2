@@ -6,6 +6,10 @@ body {
 	#fight--cast {
 		margin-bottom: 20px;
 	}
+	#resurrect {
+		display: none;
+		margin-bottom: 30px;
+	}
 	.msg--monster-defeated {
 		margin-top: 12px;
 	}
@@ -19,11 +23,14 @@ body {
 	}
 	.hit-type--crit {
 		font-weight: bold;
-		font-size: 20px;
+		font-size: 18px;
+	}
+	.hit-type--double-strike {
+		color: green;
 	}
 	.hit-type--eviscerate {
 		font-weight: bold;
-		font-size: 22px;
+		font-size: 20px;
 		text-shadow: 1px 1px 2px red;
 	}
 	#player-info--hp {
@@ -35,6 +42,12 @@ body {
 	#fight--attack,
 	#fight--cast {
 		display: none;
+	}
+	#fight-info {
+		font-size: 14px;
+	}
+	.hit--monster {
+		color: red;
 	}
 
 /*--------------*/
