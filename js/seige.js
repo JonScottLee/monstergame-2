@@ -71,6 +71,7 @@ heroGame.fight = (function () {
 
         $('#fight-info').empty();
         $('#monster-info').empty().append(monsterInfo);
+        $('.monster-info__name').text(monster.name);
 
         $('#monster-info__hp').show();
         heroGame.utilities.progress(100, $('.progress-bar--monster')); 
@@ -350,7 +351,6 @@ heroGame.events = (function () {
 
             heroGame.fight.appendMonsterInfo(hero, monster);
             $('.monster-info__hp-count').text(monster.currentHP + '/' + monster.maxHP);
-
             $('#fight--attack, #fight--cast').fadeIn(100);
         });
 
