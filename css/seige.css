@@ -1,10 +1,22 @@
 body {
 	padding: 50px 30px 30px;
 }
+	.info {
+		width: 338px;
+		font-family: 'Share Tech Mono';
+	}
 	#fight--monster,
 	#fight--attack,
 	#fight--cast {
 		margin-bottom: 20px;
+	}
+	#player-info__hp,
+	#monster-info__hp {
+		overflow: hidden;
+	}
+	#player-info--fatigue,
+	#monster-info__hp {
+		margin-bottom: 30px;
 	}
 	#resurrect {
 		display: none;
@@ -33,10 +45,10 @@ body {
 		font-size: 20px;
 		text-shadow: 1px 1px 2px red;
 	}
-	#player-info--hp {
+	#player-info__hp {
 		margin-bottom: 5px;
 	}
-	#monster-info--hp {
+	#monster-info__hp {
 		display: none;
 	}
 	#fight--attack,
@@ -50,13 +62,14 @@ body {
 		color: red;
 	}
 
-/*--------------*/
-/* Progress Bar */
-/*--------------*/
+/*---------------*/
+/* Progress Bars */
+/*---------------*/
 .progress-bar {
-    width: 354px;
+    width: auto;
     height: 22px;
     border: 1px solid #111;
+    font-size: 0;
 }
  
 .progress-bar div {
@@ -74,12 +87,13 @@ body {
 	.progress-bar--player div {
 		background-color: #0099ff;
 	}
-.progress-bar--monster {
-	background-color: #292929;
-	margin-bottom: 30px;
-}
-	.progress-bar--monster div {
-		background-color: red;
+	.player-info__hp-count,
+	.player-info__fatigue-count,
+	.monster-info__hp-count {
+		float: right
+	}
+	.player-info__fatigue-count {
+		font-size: 12px;
 	}
 .progress-bar--exp {
 	position: absolute;
@@ -103,11 +117,19 @@ body {
 	background-color: #292929;
 	border-radius: 5px;
 	height: 6px;
-	margin-bottom: 20px;
 }
 	.progress-bar--player-fatigue div {
-		background-color: purple
+		background-color: purple;
+		font-size: 0;
 	}
+/* Monster */
+.progress-bar--monster {
+	background-color: #292929;
+}
+	.progress-bar--monster div {
+		background-color: red;
+	}
+
 
 .shake {
 	width: 100%;

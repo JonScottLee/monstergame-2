@@ -72,7 +72,7 @@ heroGame.fight = (function () {
         $('#fight-info').empty();
         $('#monster-info').empty().append(monsterInfo);
 
-        $('#monster-info--hp').show();
+        $('#monster-info__hp').show();
         heroGame.utilities.progress(100, $('.progress-bar--monster')); 
     }
 
@@ -100,21 +100,26 @@ heroGame.fight = (function () {
             healAmount = heroGame.utilities.getRandomInt(hero.maxHP * .3, hero.maxHP * .5),
             $fightInfo = $('#fight-info');
 
-        if (typeof monsterTimeout !== 'number') {
-            hero.currentHP += healAmount;
-            hero.fatigue -= 10;
+        hero.currentHP += healAmount;
+        hero.fatigue -= 10;
 
-            if (hero.currentHP > hero.maxHP) hero.currentHP = hero.maxHP;
-            heroGame.utilities.progress((hero.currentHP / hero.maxHP) * 100, $('.progress-bar--player'), 600);
-            heroGame.utilities.progress(hero.fatigue, $('.progress-bar--player-fatigue'));
+        // Update fatigue counter
+        $('.player-info__fatigue-count').text(hero.fatigue + '/100');
 
-            $fightInfo.append('<div class="heal">You heal yourself for ' + healAmount + ' </div>');
+        if (hero.currentHP > hero.maxHP) hero.currentHP = hero.maxHP;
+        heroGame.utilities.progress((hero.currentHP / hero.maxHP) * 100, $('.progress-bar--player'), 600);
+        heroGame.utilities.progress(hero.fatigue, $('.progress-bar--player-fatigue'));
 
+        $fightInfo.append('<div class="heal">You heal yourself for ' + healAmount + ' </div>');
+
+        if (typeof $.data(window, 'monster') !== 'undefined') {
             var monsterTimeout = setTimeout(function () {
                 doMonsterHit();
                 clearTimeout(monsterTimeout);
             }, 650);
         }
+
+        $('.player-info__hp-count').text(hero.currentHP + '/' + hero.maxHP);
 
         if (hero.fatigue < 10) {
             $('#heal').prop('disabled', true);
@@ -186,6 +191,8 @@ heroGame.fight = (function () {
                 EXPEarned : EXPEarned,
                 items : ['Sword', 'Ring']
             });
+
+            $.removeData(window, 'monster');
         }
     }
 
@@ -267,6 +274,7 @@ heroGame.events = (function () {
 
             percentHPRemaining < 0 ? 0 : percentHPRemaining;
             heroGame.utilities.progress(parseInt(((this.currentHP / this.maxHP) * 100), 10) , $('.progress-bar--player'));
+            $('.player-info__hp-count').text(this.currentHP + '/' + this.maxHP);
         },
         updateEXP : function (lootEXP) {
             this.EXP += lootEXP;
@@ -286,10 +294,19 @@ heroGame.events = (function () {
             this.currentHP = this.maxHP;
             this.EXPCap = this.level * 100;
 
-            $('.exp-bar__label').append(levelUpText);
+            $('#fight-info').append('<h5>You gained a level!</h5><p>Health restored!</p>');
 
             // Update bar to full
             heroGame.utilities.progress(100 , $('.progress-bar--player'), 600);
+            
+            // Update HP text to full
+            $('.player-info__hp-count').text(hero.currentHP + '/' + hero.maxHP);
+
+            // Update fatigue
+            this.fatigue = 100;
+            heroGame.utilities.progress(100, $('.progress-bar--player-fatigue'));
+            $('.player-info__hp-fatigue').text(hero.fatigue + '/100');
+
             // Update EXP bar to 0
             setTimeout(function () {
                 heroGame.utilities.progress(0, $('.progress-bar--exp'), 600);
@@ -303,8 +320,8 @@ heroGame.events = (function () {
         this.type = 'monster';
         this.level = 5;
         this.battleStats = {
-            minDMG : 10,
-            maxDMG : 23,
+            minDMG : 6,
+            maxDMG : 12,
             speed: 10
         },
         this.maxHP = heroGame.utilities.getRandomInt(this.level * 20, this.level * 40);
@@ -317,8 +334,11 @@ heroGame.events = (function () {
             var HPRemaining = this.currentHP -= heroDMG,
                 percentHPRemaining = parseInt((this.currentHP / this.maxHP) * 100, 10);
 
+            if (HPRemaining < 0) HPRemaining = 0;
+
             percentHPRemaining < 0 ? 0 : percentHPRemaining;
             heroGame.utilities.progress(parseInt(((this.currentHP / this.maxHP) * 100), 10) , $('.progress-bar--monster'));
+            $('.monster-info__hp-count').text(HPRemaining+ '/' + this.maxHP);
         }
     }
 
@@ -329,6 +349,7 @@ heroGame.events = (function () {
             monster = $.data(window, 'monster', new Monster());
 
             heroGame.fight.appendMonsterInfo(hero, monster);
+            $('.monster-info__hp-count').text(monster.currentHP + '/' + monster.maxHP);
 
             $('#fight--attack, #fight--cast').fadeIn(100);
         });
@@ -367,12 +388,17 @@ heroGame.events = (function () {
 
         heroGame.utilities.progress(100, $('.progress-bar--player'));
         heroGame.utilities.progress(100, $('.progress-bar--player-fatigue'));
+        $('.player-info__hp-count').text(hero.currentHP + '/' + hero.maxHP);
+        $('.player-info__fatigue-count').text(hero.fatigue + '/' + 100);
 
         setInterval(function () {
             hero.fatigue += 10;
 
+            if (hero.fatigue >=  10) $('#heal').prop('disabled', false);
             if (hero.fatigue > 100) hero.fatigue = 100;
+
             heroGame.utilities.progress(hero.fatigue, $('.progress-bar--player-fatigue'), 500);
+            $('.player-info__fatigue-count').text(hero.fatigue + '/100');
         }, 10000);
     }
 
