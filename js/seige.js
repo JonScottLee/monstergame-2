@@ -95,6 +95,32 @@ heroGame.fight = (function () {
         hero.updateHP(hit.DMG);
     }
 
+    function doHeroHeal () {
+        var hero = $.data(window, 'hero');
+            healAmount = heroGame.utilities.getRandomInt(hero.maxHP * .3, hero.maxHP * .5),
+            $fightInfo = $('#fight-info');
+
+        if (typeof monsterTimeout !== 'number') {
+            hero.currentHP += healAmount;
+            hero.fatigue -= 10;
+
+            if (hero.currentHP > hero.maxHP) hero.currentHP = hero.maxHP;
+            heroGame.utilities.progress((hero.currentHP / hero.maxHP) * 100, $('.progress-bar--player'), 600);
+            heroGame.utilities.progress(hero.fatigue, $('.progress-bar--player-fatigue'));
+
+            $fightInfo.append('<div class="heal">You heal yourself for ' + healAmount + ' </div>');
+
+            var monsterTimeout = setTimeout(function () {
+                doMonsterHit();
+                clearTimeout(monsterTimeout);
+            }, 650);
+        }
+
+        if (hero.fatigue < 10) {
+            $('#heal').prop('disabled', true);
+        }
+    }
+
     function fightAction() {
         var hero = $.data(window, 'hero'),
             monster = $.data(window, 'monster'),
@@ -129,6 +155,7 @@ heroGame.fight = (function () {
 
             // Show Resurrection Button
             $('#resurrect').fadeIn();
+            $('#heal').hide();
 
             // Hide battle options
             $('#fight--attack, #fight--cast').hide();
@@ -171,6 +198,7 @@ heroGame.fight = (function () {
 
     return {
         appendMonsterInfo : appendMonsterInfo,
+        doHeroHeal : doHeroHeal,
         fightAction : fightAction
     }
 
@@ -184,9 +212,10 @@ heroGame.events = (function () {
         this.type = 'player';
         this.age = '15';
         this.level = 1;
-        this.EXP = 100;
-        this.EXPCap = 300;
+        this.EXP = 0;
+        this.EXPCap = this.level * (100 + this.level * 2);
         this.maxHP = 50;
+        this.fatigue = 100;
         this.currentHP = this.maxHP;
         this.esper = {
             name : 'Bahamut',
@@ -272,7 +301,7 @@ heroGame.events = (function () {
     function Monster () {
         this.name = 'Green Slime';
         this.type = 'monster';
-        this.level = 15;
+        this.level = 5;
         this.battleStats = {
             minDMG : 10,
             maxDMG : 23,
@@ -317,8 +346,13 @@ heroGame.events = (function () {
             heroGame.utilities.progress((hero.EXP / hero.EXPCap) * 100, $('.progress-bar--exp'));
 
             $('#resurrect').fadeOut();
+            $('#heal').show();
             $('#fight--monster').trigger('click');
         });
+
+        $('#heal').on('click', function () {
+            heroGame.fight.doHeroHeal();
+        })
     }
 
     function setEXP () {
@@ -332,6 +366,14 @@ heroGame.events = (function () {
         hero = $.data(window, 'hero', new Hero());
 
         heroGame.utilities.progress(100, $('.progress-bar--player'));
+        heroGame.utilities.progress(100, $('.progress-bar--player-fatigue'));
+
+        setInterval(function () {
+            hero.fatigue += 10;
+
+            if (hero.fatigue > 100) hero.fatigue = 100;
+            heroGame.utilities.progress(hero.fatigue, $('.progress-bar--player-fatigue'), 500);
+        }, 10000);
     }
 
     return {

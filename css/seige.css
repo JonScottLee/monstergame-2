@@ -34,7 +34,7 @@ body {
 		text-shadow: 1px 1px 2px red;
 	}
 	#player-info--hp {
-		margin-bottom: 20px;
+		margin-bottom: 5px;
 	}
 	#monster-info--hp {
 		display: none;
@@ -98,6 +98,15 @@ body {
 		position: absolute;
 		top: 8px;
 		left: 50%;
+	}
+.progress-bar--player-fatigue {
+	background-color: #292929;
+	border-radius: 5px;
+	height: 6px;
+	margin-bottom: 20px;
+}
+	.progress-bar--player-fatigue div {
+		background-color: purple
 	}
 
 .shake {
