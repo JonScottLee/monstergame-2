@@ -2,7 +2,7 @@ body {
 	padding: 50px 30px 30px;
 }
 	.info {
-		width: 338px;
+		width: 339px;
 		font-family: 'Share Tech Mono';
 	}
 	#fight--monster,
@@ -60,6 +60,10 @@ body {
 	}
 	.hit--monster {
 		color: red;
+	}
+	.badge-dead {
+		display: inline-block;
+		margin-left: 5px;
 	}
 
 /*---------------*/
