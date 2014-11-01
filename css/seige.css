@@ -55,7 +55,7 @@ body {
 	#fight--cast {
 		display: none;
 	}
-	#fight-info {
+	.fight-info {
 		font-size: 14px;
 	}
 	.hit--monster {
