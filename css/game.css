@@ -1,0 +1,338 @@
+/*-------------------*/
+/* Fonts ------------*/
+/*-------------------*/
+@font-face {
+  font-family: 'icons';
+  src: url("../fonts/icomoon.eot?") format("eot"), url("../fonts/icons.woff") format("woff"), url("../fonts/icomoon.ttf") format("truetype"); }
+/* End Fonts */
+/*--------------------*/
+/* Placeholders ------*/
+/*--------------------*/
+#player-info__hp, #monster-info__hp {
+  float: left;
+  clear: both;
+  width: 100%; }
+
+.stats-toggle, .player-info__name {
+  display: inline-block;
+  vertical-align: top; }
+
+.entity-ailment__icon {
+  display: inline-block;
+  vertical-align: middle; }
+
+/*--------------------*/
+/* Buttons -----------*/
+/*--------------------*/
+#train {
+  display: block;
+  background: #FFB03B;
+  width: 337px;
+  margin-bottom: 30px; }
+
+#fight--monster,
+#fight--attack,
+#fight--cast {
+  margin-bottom: 10px; }
+
+#fight--monster {
+  width: 229px; }
+
+#fight--monster,
+#fight--attack {
+  background: #8E2800; }
+
+#fight--cast {
+  background: #FFB03B; }
+
+#resurrect {
+  display: none;
+  margin-bottom: 30px; }
+
+#fight--attack,
+#fight--cast {
+  display: none; }
+
+#heal {
+  background: #468966; }
+
+/*--------------------*/
+/* Global ------------*/
+/*--------------------*/
+body {
+  padding: 50px 30px 30px; }
+
+blockquote {
+  font-style: normal; }
+
+.info {
+  width: 339px;
+  font-family: 'Share Tech Mono'; }
+
+/* Shake Effects Modifiers */
+.shake {
+  width: 100%; }
+
+/*--------------------*/
+/* Battle Info -------*/
+/*--------------------*/
+.actions {
+  clear: both; }
+
+.fight-info {
+  display: none;
+  overflow: hidden;
+  font-size: 14px; }
+
+.msg--monster-defeated {
+  margin-top: 12px; }
+
+.hit-type--double-strike {
+  color: green; }
+
+.hit--monster {
+  color: red; }
+
+.badge-dead {
+  display: inline-block;
+  margin-left: 5px; }
+
+.fight-info__toggle {
+  font-family: 'Share Tech Mono', sans-serif;
+  display: none;
+  margin-bottom: 10px; }
+
+.stats-toggle,
+.fight-info__toggle {
+  text-transform: uppercase;
+  cursor: pointer;
+  text-decoration: underline;
+  position: relative;
+  font-size: 13px; }
+  .stats-toggle:after,
+  .fight-info__toggle:after {
+    content: '\A';
+    display: block;
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 5px solid #000;
+    position: absolute;
+    right: -11px;
+    top: 7px; }
+  .stats-toggle.open:after,
+  .fight-info__toggle.open:after {
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #000;
+    right: -15px;
+    top: 10px; }
+
+.fight-info__toggle {
+  cursor: pointer;
+  text-decoration: underline; }
+
+/* Ailments */
+.entity-ailment__icon {
+  font-weight: bold;
+  padding-right: 5px; }
+
+.entity-ailment--poison {
+  color: purple; }
+
+.entity-ailment--paralyzed {
+  color: #cba700; }
+
+.entity-ailment__icon--poisoned {
+  font-size: 24px;
+  color: purple; }
+
+.entity-ailment__icon--paralyzed {
+  font-size: 33px;
+  position: relative;
+  top: -3px;
+  color: #cba700; }
+
+.heal {
+  color: #468966;
+  font-weight: bold; }
+
+.heal:before {
+  content: '+';
+  font-weight: bold; }
+
+.hit--player {
+  color: red;
+  display: block;
+  clear: both; }
+
+.monster-info__dmg-taken {
+  color: red;
+  position: absolute;
+  right: -40px; }
+
+.crit {
+  font-size: 20px;
+  font-weight: bold; }
+
+.eviscerate {
+  font-size: 26px;
+  font-weight: bold; }
+
+.hit--flavor {
+  font-style: italic;
+  font-weight: bold;
+  color: green;
+  font-size: 14px; }
+
+.simplemodal-overlay {
+  background: #000; }
+
+.loot {
+  display: none; }
+
+.simplemodal-container .loot {
+  padding: 40px 30px;
+  width: 300px;
+  height: 300px;
+  background: #fff;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: -150px 0 0 -150px; }
+  .simplemodal-container .loot ul {
+    list-style: none;
+    margin: 0 0 0 30px;
+    line-height: 40px; }
+  .simplemodal-container .loot li {
+    font-size: 20px;
+    font-family: 'Share Tech Mono'; }
+
+/*--------------------*/
+/* Player Info -------*/
+/*--------------------*/
+#player-info__hp {
+  margin-bottom: 5px; }
+
+.player-info__stats {
+  text-transform: uppercase;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer; }
+
+.stats-wrap {
+  height: 0;
+  overflow: hidden;
+  -webkit-transition: height 300ms ease-in-out;
+  -moz-transition: height 300ms ease-in-out;
+  -ms-transition: height 300ms ease-in-out;
+  -o-transition: height 300ms ease-in-out;
+  transition: height 300ms ease-in-out; }
+
+.stats-view {
+  border: 1px solid #000;
+  margin: 10px 0 0;
+  padding: 15px; }
+
+.stats-view h6 {
+  display: inline-block; }
+
+/*--------------------*/
+/* Monster Info ------*/
+/*--------------------*/
+.monster-info {
+  margin: 0 0 10px; }
+
+.monster__name {
+  display: inline-block;
+  font-weight: bold;
+  margin: 0 10px 0 0; }
+
+#monster-info__hp {
+  display: none;
+  position: relative;
+  margin-bottom: 20px; }
+
+.monster-info__stats-toggle {
+  display: none; }
+
+.monster-info__name {
+  display: none;
+  text-transform: capitalize; }
+
+.monster-info__ailments {
+  display: inline-block; }
+
+.monster-info__ailments > span {
+  display: inline-block; }
+
+.monster-info__dmg-taken.poison {
+  color: purple; }
+
+.monster-info__dmg-taken.poison:after {
+  content: '\2620';
+  font-size: 30px; }
+
+/*---------------*/
+/* Progress Bars */
+/*---------------*/
+.progress-bar {
+  width: auto;
+  height: 22px;
+  border: 1px solid #111;
+  font-size: 0; }
+  .progress-bar div {
+    height: 100%;
+    color: #fff;
+    text-align: right;
+    line-height: 22px;
+    /* same as #progressBar height if we want text middle aligned */
+    width: 0; }
+
+/* Player */
+.progress-bar--player-hp {
+  background-color: #292929; }
+  .progress-bar--player-hp div {
+    background-color: #468966; }
+
+.player-info__hp-count,
+.player-info__tp-count,
+.monster-info__hp-count {
+  float: right; }
+
+.player-info__tp-count {
+  font-size: 12px; }
+
+.progress-bar--exp {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  background-color: #ddd;
+  height: 10px; }
+  .progress-bar--exp div {
+    background-color: lightgreen;
+    font-size: 0; }
+
+.exp-bar__label {
+  font-weight: bold;
+  position: absolute;
+  top: 8px;
+  left: 50%; }
+
+.progress-bar--player-hp-tp {
+  background-color: #292929;
+  height: 8px; }
+  .progress-bar--player-hp-tp div {
+    background-color: #FFB03B;
+    font-size: 0; }
+
+.player-info__tp-count {
+  display: none; }
+
+/* Monster */
+.progress-bar--monster {
+  background-color: #292929; }
+  .progress-bar--monster div {
+    background-color: #8E2800; }

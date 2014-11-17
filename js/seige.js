@@ -1,6 +1,6 @@
-var game = game || {};
+game = {};
 
-game.utilities = (function () {
+utilities = (function () {
     function getRandomInt(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
@@ -9,20 +9,45 @@ game.utilities = (function () {
         return Math.floor(Math.random() * 100);
     }
 
+    function getHitFlavor (weaponType) {
+        var flavorText;
+
+        if (weaponType == 'sword') {
+            flavorText = 'Your energy surges, and you flash forwards with a blindingly fast strike';
+        }
+
+        return flavorText;
+    }
+
     function getHitDetails (entity) {
         var player = $.data(window, 'player'),
-            hitType = 'hit',
-            DMG = parseInt(game.utilities.getRandomInt(entity.battleStats.minDMG, entity.battleStats.maxDMG));
+            weapon = entity.gear.weapon,
+            weaponType = weapon.type,
+            clumsy = utilities.searchForTrait(monster, 'clumsy') === true,
+            blind = utilities.searchForTrait(monster, 'blind') === true,
+            poisoned = utilities.searchForTrait(monster, 'poison') === true,
+            mute = utilities.searchForTrait(monster, 'mute') === true,
+            paralyzed = utilities.searchForTrait(monster, 'paralyzed') === true,
+            hitType = 'hit, hit',
+            effect = 'normal',
+            DMG = parseInt(utilities.getRandomInt(entity.stats.minDMG, entity.stats.maxDMG));
 
         // Check if critical hit && possibly an eviscerate
-        if (entity.type != 'monster' && Math.floor(Math.random()*100) <= entity.battleStats.crit) {
-            hitType = '<span class="hit-type--crit">crits!</span> ';
+        if (entity.type != 'monster' && (clumsy || Math.floor(Math.random()*100) <= entity.stats.crit)) {
+            
+            // Append clumsy message
+            if (clumsy) $('.fight-info').append('<span class="entity-stats--clumsy">Monster is off-balance and clumsy!</span>');
 
-            if (entity.gear.weapon.type == 'sword') hitType = '<span class="hit-type--crit">slice!</span> ';
+            // Determine hit type and name
+            if (weaponType == 'sword') hitType = 'crit, slice';
+            if (weaponType == 'spear') hitType = 'crit, impale';
+            if (weaponType == 'mace' || entity.gear.weapon.type == 'hammer' ) hitType = 'crit, crush';
+            if (weaponType == 'axe') hitType = 'crit, gut';
 
-            DMG = parseInt(game.utilities.getRandomInt(entity.battleStats.minDMG, entity.battleStats.maxDMG) * 4, 10);
+            // Get Hit damage
+            DMG = parseInt(utilities.getRandomInt(entity.stats.minDMG, entity.stats.maxDMG) * 4, 10);
 
-            // Shake effect
+            // Do Shake effect on crit
             $('body').addClass('shake');
             setTimeout(function () {
                 $('body').removeClass();
@@ -30,9 +55,9 @@ game.utilities = (function () {
 
             // 10% of time, when user does DMG == to at least half of monster's max HP, do an eviscerate
             // Or, eviscerate at 1/4 crit chance
-            if ((Math.floor(Math.random()*100) <= entity.battleStats.crit / 4)) {
-                hitType = '<span class="hit-type--eviscerate">eviscerate!!</span> ';
-                DMG = parseInt(game.utilities.getRandomInt(entity.battleStats.minDMG, entity.battleStats.maxDMG) * 10, 10);
+            if ((Math.floor(Math.random()*100) <= entity.stats.crit / 4)) {
+                hitType = 'eviscerate, eviscerate';
+                DMG = parseInt(utilities.getRandomInt(entity.stats.minDMG, entity.stats.maxDMG) * 10, 10);
 
                 // Shake effect
                 $('body').addClass('shake shake-hard');
@@ -42,8 +67,13 @@ game.utilities = (function () {
             }
         }
 
+        if (weapon.effect === 'poison' && utilities.getRandomPercent() < weapon.effectChance && monster.ailments.indexOf('poison') === -1) {
+            effect = 'poison';
+        }
+
         return {
             hitType : hitType,
+            effect : effect,
             DMG : DMG
         }
     }
@@ -55,130 +85,218 @@ game.utilities = (function () {
         $element.find('div').animate({ width: progressBarWidth }, speed).html(percent + "%&nbsp;");
     };
 
-    function fastIncrement (sNum, eNum) {
+    function searchForTrait (entity, trait) {
+        if (entity.traits.indexOf(trait) > -1) {
+            return true;
+        }
+    }
+
+    function searchForAilment (entity, ailment) {
+        if (entity.ailments.indexOf(ailment) > -1) {
+            return true;
+        }
+    }
+
+    function generateMonsterName () {
+        var colors = ['red', 'orange', 'yellow', 'green', 'blue', 'black', 'white'],
+            types = ['slime', 'hawk', 'dragon', 'beholder', 'griffin', 'wolf', 'hydra', 'medusa', 'boar'],
+            prefix = ['mangy', 'rabid', 'swift', 'giant', 'small', 'tiny'],
+            name = {};
+
+        if (getRandomPercent() > 90) {
+            name.prefix = prefix[utilities.getRandomInt(0, prefix.length - 1)];
+        }
+
+        name.color = colors[utilities.getRandomInt(0, colors.length - 1)];
+        name.type = types[utilities.getRandomInt(0, types.length - 1)];
+
+        return name;
+    }
+
+    function generateMonsterTraits () {
+        var traits = ['strong', 'fast', 'control', 'berserk', 'unstable', 'wealthy', 'hoarder', 'veteran', 'commander'];
+
+        return traits[utilities.getRandomInt(0, traits.length - 1)];
+    }
+
+    function generateRandomItems () {
 
     }
 
     return {
         getRandomInt : getRandomInt,
         getRandomPercent : getRandomPercent,
+        getHitFlavor : getHitFlavor,
         progress : progress,
-        getHitDetails : getHitDetails
+        getHitDetails : getHitDetails,
+        searchForTrait : searchForTrait,
+        searchForAilment : searchForAilment,
+        generateMonsterName : generateMonsterName,
+        generateMonsterTraits : generateMonsterTraits
     }
 })();
 
 game.fight = (function () {
 
-    function appendMonsterInfo (player, monster) {
-        var monsterInfo =
-                '<div class="monster__name">A ' + monster.name + '</div>' +
-                '<span id="monster-info__HP" class="badge badge-red">' + monster.currentHP + '</span>';
+    function appendMonsterInfo () {
+        var monsterInfo = '<span id="monster-info__HP" class="badge badge-red">' + monster.currentHP + '</span>';
 
-        $('.fight-info').empty();
+        $('.fight-info, .monster-info__ailments').empty();
         $('.monster-info').empty().append(monsterInfo);
         $('.monster-info__name').text(monster.name);
         $('#monster-info__hp').show();
         $('.monster-info__hp-count').text(monster.currentHP + '/' + monster.maxHP);
+        $('.monster-info__name').css('display', 'inline-block');
+        /*$('.monster-info__stats-toggle').add('.monster-info__name').css('display', 'inline-block');
 
-        game.utilities.progress(100, $('.progress-bar--monster'), 250); 
+        var stats = '<li class="stats-view__HP"><h6>HP</h6>: ' + monster.currentHP + '/' + monster.maxHP +'</li>' +
+                '<li class="stats-view__damage"><h6>Damage</h6>: ' + monster.stats.minDMG + ' - ' + player.stats.maxDMG + '</li>' +
+                '<li class="stats-view__weapon"><h6>Weapon</h6>: ' + monster.gear.weapon.name + '</li>' +
+                '<li class="stats-view__traits"><h6>Traits</h6>: </li>';
+
+        $('.monster-info__stats-view').empty().append(stats);
+
+        for (i = 0; i < monster.traits.length; i++) {
+            $('.monster-info__stats-view .stats-view__traits').append(monster.traits[i] + ' ');
+        } */
+
+        utilities.progress(100, $('.progress-bar--monster'), 600); 
     }
 
-    function doplayerHit () {
-        var player = $.data(window, 'player'),
-            hit = game.utilities.getHitDetails($.data(window, 'player')),
+    function doPlayerTurn () {
+        var hit = utilities.getHitDetails($.data(window, 'player')),
+            hitType = hit.hitType.split(',')[0],
+            hitName = hit.hitType.split(',')[1],
+            hitFlavor = utilities.getHitFlavor(player.gear.weapon.type),
+            isDoubleStrike = utilities.getRandomPercent() > 95,
             $fightInfo = $('.fight-info');
 
-        $fightInfo.append('<div class="hit--player">' + player.name + ' ' + hit.hitType + ' ' + $.data(window, 'monster').name + ' for <b>' + hit.DMG + ' damage</b></div>');
+        // What type of hit?
+        if (hitType == 'crit') {
+            $fightInfo.append('<div class="hit--flavor">' + hitFlavor + ', dealing ' + hit.DMG + ' damage!</div>');
+        } else {
+            $fightInfo.append('<div class="hit--player">' + player.name + '<span class=" ' + hitType + '"> ' + hitName + ' </span>' + $.data(window, 'monster').name + ' for <b>' + hit.DMG + ' damage</b></div>');
+        }
+        
+        // Show floating damage number next to monster name
+        $('#monster-info__hp').append('<div class="monster-info__dmg-taken">-' + hit.DMG + '</div>');
+        $('.monster-info__dmg-taken').addClass(hitType).slideFade(2000, 250);
+
+        // Apply ailments
+        if (hit.effect === 'poison') {
+            monster.ailments.push('poison');
+            $fightInfo.append(monster.name + ' is poisoned!');
+        }
+
+        // Update monster HP
         monster.updateHP(hit.DMG);
-        $('#monster-info__HP').text(monster.currentHP);
     }
 
-    function doMonsterHit () {
-        var monster = $.data(window, 'monster'),
-            player = $.data(window, 'player'),
-            hit = game.utilities.getHitDetails($.data(window, 'monster')),
+    function doMonsterTurn () {
+        var hit = utilities.getHitDetails($.data(window, 'monster')),
+            poisoned = utilities.searchForAilment(monster, 'poison') === true,
+            paralyzed = utilities.searchForAilment(monster, 'paralyzed') === true,            
+            $monsterAilments = $('.monster-info__ailments'),
+            $monsterName = $('.monster-info__name'),
             $fightInfo = $('.fight-info');
+
+        // Monster is paralyzed
+        if (paralyzed) {
+            $monsterAilments.empty().append('<span class="entity-ailment__icon entity-ailment__icon--paralyzed">\u2607</span>');
+             $fightInfo.append('<div class="entity-ailment entity-ailment--paralyzed">' + monster.name + ' is paralyzed and can\'t attack!</div>');
+
+            return;
+        }
+        
+        // Monster is poisoned
+        if (poisoned) {
+            $monsterAilments.empty().append('<span class="entity-ailment__icon entity-ailment__icon--poisoned">\u2620</span>');
+            $fightInfo.append('<div class="entity-ailment entity-ailment--poison">' + monster.name + ' takes ' + Math.floor(monster.maxHP * .05) + ' damage from poison!</div>');
+            
+            dmgOffset = parseInt(-(utilities.getRandomInt(0, 45) + 35), 10);
+            $('#monster-info__hp').append('<div class="monster-info__dmg-taken poison">-' + Math.floor(monster.maxHP * .05)+ '</div>');
+            $('.monster-info__dmg-taken').css('right', dmgOffset).slideFade(1200, 80);
+
+            monster.updateHP(Math.floor(monster.maxHP * .05));
+        }
+
+        // Shake off an ailment. This uses this turn's attack
+        var shakeOffAilment = utilities.getRandomPercent() > 85;
+        if (monster.ailments.length > 0 && shakeOffAilment) {
+            var ailIndex = Math.floor(Math.random() * monster.ailments.length),
+                ailName = monster.ailments[ailIndex];
+
+            $fightInfo.append('<b>' + monster.name + ' shook off ' + ailName + '</b>');
+            $('.entity-ailment__icon--poisoned').fadeOut('fast').fadeIn('fast').fadeOut('fast').fadeIn('fast').fadeOut('fast').fadeIn('fast').fadeOut('fast').fadeIn('fast').fadeOut(400)
+            monster.ailments.splice(ailIndex, 1);
+
+            return;
+        }
 
         $fightInfo.append('<div class="hit--monster">' + monster.name + ' ' + 'hit' + ' ' + $.data(window, 'player').name + ' for <b>' + hit.DMG + ' damage</b></div>');
         player.updateHP(hit.DMG);
     }
 
     function doplayerHeal () {
-        var player = $.data(window, 'player');
-            healAmount = game.utilities.getRandomInt(player.maxHP * .3, player.maxHP * .5),
+        var healAmount = utilities.getRandomInt(player.maxHP * .3, player.maxHP * .5),
             $fightInfo = $('.fight-info');
 
         player.currentHP += healAmount;
-        player.fatigue -= 10;
+        player.tp -= 30;
 
-        // Update fatigue counter
-        $('.player-info__fatigue-count').text(player.fatigue + '/100');
+        // Update tp counter
+        $('.player-info__tp-count').text(player.tp + '/100');
 
         if (player.currentHP > player.maxHP) player.currentHP = player.maxHP;
-        game.utilities.progress((player.currentHP / player.maxHP) * 100, $('.progress-bar--player'), 600);
-        game.utilities.progress(player.fatigue, $('.progress-bar--player-fatigue'));
+        utilities.progress((player.currentHP / player.maxHP) * 100, $('.progress-bar--player-hp'), 600);
+        utilities.progress(player.tp, $('.progress-bar--player-hp-tp'));
 
         $fightInfo.append('<div class="heal">You heal yourself for ' + healAmount + ' </div>');
 
         if (typeof $.data(window, 'monster') !== 'undefined') {
             var monsterTimeout = setTimeout(function () {
-                doMonsterHit();
+                doMonsterTurn();
                 clearTimeout(monsterTimeout);
             }, 650);
         }
 
-        $('.player-info__hp-count').text(player.currentHP + '/' + player.maxHP);
+        $('.player-hp--current').text(player.currentHP);
+        $('.player-hp--total').text(player.maxHP);
 
-        if (player.fatigue < 10) {
+        if (player.tp < 10) {
             $('#heal').prop('disabled', true);
         }
     }
 
     function fightAction() {
-        var player = $.data(window, 'player'),
-            monster = $.data(window, 'monster'),
-            EXPEarned = game.utilities.getRandomInt(parseInt(monster.maxHP * .5), 10),
+        var EXPEarned = 14, // utilities.getRandomInt(parseInt(monster.maxHP * .5), 10),
             $fightInfo = $('.fight-info');
 
-        if (player.battleStats.speed > monster.battleStats.speed) {
-            
-            // Double strike!
-            if (game.utilities.getRandomPercent() > 95) {
-                $fightInfo.append('<div class="hit-type--double-strike">You perform a double-strike!</div>')
-                doplayerHit();
-            }
-
-            doplayerHit();
-
-            if (monster.currentHP > 0 && player.currentHP > 0) {
-                doMonsterHit();
-            }
-        } else {
-            doMonsterHit();
-            if (player.currentHP > 0) {
-                doplayerHit();
-            }
+        // Stop regenerating tp automatically
+        if (typeof tpInterval == 'number') {
+            clearInterval(tpInterval);
         }
 
-        if (player.currentHP <= 0) {
-            player.currentHP = 0;
-            game.utilities.progress(0, $('.progress-bar--player'));
+        // Clear any training going on
+        if (typeof trainingInterval == 'number') {
+            clearInterval(trainingInterval);
+        }
 
-            $fightInfo.append('<h4>You died!</h4');
-
-            // Show Resurrection Button
-            $('#resurrect').fadeIn();
-            $('#heal').hide();
-
-            // Hide battle options
-            $('#fight--attack, #fight--cast').hide();
-
+        // Check who attacks first, and do their turns
+        if (player.stats.speed > monster.stats.speed) {
+            doPlayerTurn();
+            if (monster.currentHP > 0 && player.currentHP > 0) doMonsterTurn();
+        } else {
+            doMonsterTurn();
+            if (player.currentHP > 0)  doPlayerTurn();
         }
 
         if (monster.currentHP <= 0) {
+            var EXPEarned = 14; // utilities.getRandomInt(parseInt(monster.maxHP * .5), 10);
+
             // Set monster HP gauge to 0
             monster.currentHP = 0;
-            game.utilities.progress(0, $('.progress-bar--monster'));
+            utilities.progress(0, $('.progress-bar--monster'));
 
             // Append defeated and EXP messaging
             $fightInfo
@@ -194,19 +312,100 @@ game.fight = (function () {
             // Hide battle options
             $('#fight--attack, #fight--cast').hide();
 
+            // Empty ailments
+            $('.monster-info__ailments').empty();
+
+            // Begin restoring tp
+            tpInterval = setInterval(function () {
+                player.tp += 1;
+
+                if (player.tp >=  10) $('#heal').prop('disabled', false);
+                if (player.tp > 100) player.tp = 100;
+
+                utilities.progress(player.tp, $('.progress-bar--player-hp-tp'), 500);
+                $('.player-info__tp-count').text(player.tp + '/100');
+            }, 1000);
+
             // Post-battle work
             postBattleActions({
                 EXPEarned : EXPEarned,
-                items : ['Sword', 'Ring']
+                loot : ['Sword', 'Ring']
             });
 
             $.removeData(window, 'monster');
+
+            $('#train').show();
+
+            var loot = {
+                gold: utilities.getRandomInt(monster.level * 10, monster.level * 100),
+                EXP: monster.level * 10,
+                items: ['Killer Edge', 'Amber Ring']
+            }
+
+            showLoot(loot);
+
+            return;
         }
+
+        if (player.currentHP <= 0) {
+            player.currentHP = 0;
+            utilities.progress(0, $('.progress-bar--player-hp'));
+
+            $fightInfo.append('<h4>You died!</h4');
+
+            // Show Resurrection Button
+            $('#resurrect').fadeIn();
+            $('#heal').hide();
+
+            // Hide battle options
+            $('#fight--attack, #fight--cast').hide();
+
+        }
+
+        $('.fight-info__toggle').css('display', 'inline-block');
+    }
+
+    function showLoot(earnedLoot) {
+        var $lootContainer = $('.loot'),
+            loot = 
+                '<h2>Battle Rewards</h2>' +
+                '<ul>' +
+                    '<li class="loot__gold">Gold: ' + earnedLoot.gold + '</li>' +
+                    '<li class="loot__exp">EXP: ' + earnedLoot.EXP + '</li>' +
+                '</ul>';
+
+        $lootContainer.append(loot)
+        for (var i = 0; i < earnedLoot.items.length; i++) {
+            $lootContainer.find('ul').append('<li class="loot__item">' + earnedLoot.items[i] + '</li>');
+        }
+
+        $.modal($lootContainer, {
+            opacity: 80,
+            overlayClose: true,
+            onClose: function (dialog) {
+                $('.simplemodal-container').fadeOut();
+                $('.simplemodal-overlay').animate({height: 0}, function () {
+                   $.modal.close();
+                   $('.loot').empty();
+                });
+            }
+        })
+    }
+
+    function doTraining () {
+        trainingInterval = setInterval(function () {
+            player.EXP += Math.abs(player.EXPCap * .001);
+            utilities.progress((player.EXP / player.EXPCap) * 100, $('.progress-bar--exp'), 0);
+
+            $('.training__percentage').text('(' + ((player.EXP / player.EXPCap) * 100).toFixed(2) + '%)');
+            if (player.EXP > player.EXPCap) {
+                player.gainLevel();
+                utilities.progress(0, $('.progress-bar--exp'));
+            }
+        }, 100);
     }
 
     function postBattleActions (loot) {
-        var player = $.data(this, 'player');
-
         // player.updateplayer(loot);
         player.updateEXP(loot.EXPEarned);
     }
@@ -214,7 +413,8 @@ game.fight = (function () {
     return {
         appendMonsterInfo : appendMonsterInfo,
         doplayerHeal : doplayerHeal,
-        fightAction : fightAction
+        fightAction : fightAction,
+        doTraining : doTraining
     }
 
 })();
@@ -228,9 +428,9 @@ game.events = (function () {
         this.age = '15';
         this.level = 1;
         this.EXP = 0;
-        this.EXPCap = this.level * (100 + this.level * 2);
+        this.EXPCap = 15; //this.level * (100 + this.level * 2);
         this.maxHP = 50;
-        this.fatigue = 100;
+        this.tp = 100;
         this.currentHP = this.maxHP;
         this.esper = {
             name : 'Bahamut',
@@ -241,8 +441,10 @@ game.events = (function () {
             weapon : {
                 name : 'Copper Sword',
                 type : 'sword',
+                effect : 'poison',
+                effectChance : 10,
                 dmg : 12,
-                description : 'A simple -- yet sturdy -- copper blade. Centuries of warriors have swung the sharp end at myriad foes.'
+                description : 'A simple -- yet sturdy -- copper blade. Centuries of warriors have swung the sharp end at myriad foes. It\'s edge is quenched in poison.'
             },
             armor : {
                 name : 'Chainmail',
@@ -264,13 +466,13 @@ game.events = (function () {
                 description : 'Gloves description.'
             }
         },
-        this.battleStats = {
-            minDMG : 10 + this.gear.weapon.dmg,
-            maxDMG : 23 + this.gear.weapon.dmg,
+        this.stats = {
+            minDMG : (this.level * 4) + this.gear.weapon.dmg,
+            maxDMG : (this.level * 8) + this.gear.weapon.dmg,
             crit : 30 + this.gear.gloves.critBonus,
             speed: 20
         },
-        this.abilities = ['Strength', 'Speed', 'Fine Control', 'Berserker', 'Unstable'];
+        this.traits = ['Strength', 'Speed', 'Control', 'Berserker', 'Unstable', 'Quick-Swap'];
     };
 
     player.prototype = {
@@ -281,8 +483,10 @@ game.events = (function () {
                 percentHPRemaining = parseInt((this.currentHP / this.maxHP) * 100, 10);
 
             percentHPRemaining < 0 ? 0 : percentHPRemaining;
-            game.utilities.progress(parseInt(((this.currentHP / this.maxHP) * 100), 10) , $('.progress-bar--player'));
-            $('.player-info__hp-count').text(this.currentHP + '/' + this.maxHP);
+            utilities.progress(parseInt(((this.currentHP / this.maxHP) * 100), 10) , $('.progress-bar--player-hp'));
+            
+            $('.player-hp--current').text(player.currentHP);
+            $('.player-hp--total').text(player.maxHP);
         },
         updateEXP : function (lootEXP) {
             this.EXP += lootEXP;
@@ -290,65 +494,84 @@ game.events = (function () {
             if (this.EXP >= this.EXPCap) {
                 this.gainLevel();
                 $('#exp-gauge').find('.exp-gauge__level').text('Level: ' + this.level);
-
-                game.utilities.progress(100, $('.progress-bar--exp'), 600);
             } else {
-                game.utilities.progress(Math.round((this.EXP / this.EXPCap) * 100), $('.progress-bar--exp'), 600);
+                utilities.progress(Math.round((this.EXP / this.EXPCap) * 100), $('.progress-bar--exp'), 600);
             }
         },
         gainLevel : function (int) {
-            var levelUpText = $('<span color="green; font-weight: bold">Level Up!</span>').delay(5000);
-            this.level += 1;
-            this.currentHP = this.maxHP;
-            this.EXPCap = this.level * 100;
+            var levelUpText = $('<span color="green; font-weight: bold">Level Up!</span>').delay(5000),
+                player = this;
+
+            player.level += 1;
+            player.currentHP = this.maxHP;
+            player.EXPCap = this.level * 100;
 
             $('.fight-info').append('<h5>You gained a level!</h5><p>Health restored!</p>');
 
-            // Update bar to full
-            game.utilities.progress(100 , $('.progress-bar--player'), 600);
+            // Update XP (might have rolled over into this new level, so doesn't start back at 0);
+            utilities.progress(100, $('.progress-bar--exp'), 800);
+            setTimeout(function () {
+                utilities.progress(0, $('.progress-bar--exp'), 0);
+                utilities.progress(Math.round((player.EXP / player.EXPCap) * 100), $('.progress-bar--exp'), 600);
+            }, 850);
             
             // Update HP text to full
-            $('.player-info__hp-count').text(player.currentHP + '/' + player.maxHP);
+            console.info(player.EXP, player.EXPCap);
+            $('.player-hp--current').text(player.currentHP);
+            $('.player-hp--total').text(player.maxHP);
 
-            // Update fatigue
-            this.fatigue = 100;
-            game.utilities.progress(100, $('.progress-bar--player-fatigue'));
-            $('.player-info__hp-fatigue').text(player.fatigue + '/100');
-
-            // Update EXP bar to 0
-            setTimeout(function () {
-                game.utilities.progress(0, $('.progress-bar--exp'), 600);
-            }, 1000);
-            
+            // Update tp
+            this.tp = 100;
+            utilities.progress(100, $('.progress-bar--player-hp-tp'));
+            $('.player-info__hp-tp').text(player.tp + '/100');
+            $('.player-info__name').text(player.name + ' (lvl.' + player.level + ')');            
         }
     }
 
     function Monster () {
-        var player = $.data(window, 'player');
+        var nameObj = utilities.generateMonsterName(),
+            name = '';
 
-        this.name = 'Green Slime';
-        this.type = 'monster';
-        this.level = game.utilities.getRandomInt(player.level, player.level + 2);
-        this.battleStats = {
+        for (var key in nameObj) {
+            if (nameObj.hasOwnProperty(key)) {
+                name += ' ' + nameObj[key];
+            }
+        }
+
+        this.name = name;
+        this.type = utilities.generateMonsterName().type;
+        this.level = player.level;
+        this.traits = utilities.generateMonsterTraits();
+        this.ailments = [];
+        this.level = utilities.getRandomInt(player.level, player.level + 2);
+        this.stats = {
             minDMG : 6,
             maxDMG : 12,
             speed: 10
         },
-        this.maxHP = game.utilities.getRandomInt(this.level * 5, this.level * 8);
+        this.gear = {
+            weapon: {
+                name: 'claws',
+                type: 'monster attack'
+            }
+        }
+        this.maxHP = 100; // utilities.getRandomInt(this.level *15, this.level * 20);
         this.currentHP = this.maxHP;
-        this.abilities = [];
     }
 
     Monster.prototype = {
-        updateHP : function (playerDMG) {
-            var HPRemaining = this.currentHP -= playerDMG,
-                percentHPRemaining = parseInt((this.currentHP / this.maxHP) * 100, 10);
+        updateHP : function (DMG) {
+            this.currentHP -= DMG;
 
-            if (HPRemaining < 0) HPRemaining = 0;
-
+            if (this.currentHP < 0) {
+                this.currentHP = 0;
+            }
+            
+            var percentHPRemaining = parseInt((this.currentHP / this.maxHP) * 100, 10);
             percentHPRemaining < 0 ? 0 : percentHPRemaining;
-            game.utilities.progress(parseInt(((this.currentHP / this.maxHP) * 100), 10) , $('.progress-bar--monster'));
-            $('.monster-info__hp-count').text(HPRemaining+ '/' + this.maxHP);
+
+            utilities.progress(percentHPRemaining , $('.progress-bar--monster'));
+            $('.monster-info__hp-count').text(this.currentHP + '/' + this.maxHP);
         }
     }
 
@@ -357,23 +580,28 @@ game.events = (function () {
             $(this).hide();
 
             monster = $.data(window, 'monster', new Monster());
+            game.fight.appendMonsterInfo();
 
-            game.fight.appendMonsterInfo(player, monster);
+            $('.fight-info__toggle').hide().text('See Fight Details');
+            $('#train').hide();
             $('#fight--attack, #fight--cast').fadeIn(100);
         });
 
         $('#fight--attack').on('click', function () {
             game.fight.fightAction();
+
         });
 
-        $('#resurrect').on('click', function () {
-            var player = $.data(window, 'player').currentHP = $.data(window, 'player');
-            
+        $('#resurrect').on('click', function () {            
             player.currentHP = player.maxHP;
             player.EXP -= parseInt(player.EXP * .3, 10);
-            game.utilities.progress(100, $('.progress-bar--player'));
-            game.utilities.progress((player.EXP / player.EXPCap) * 100, $('.progress-bar--exp'));
+            player.tp = 100;
+            utilities.progress(100, $('.progress-bar--player-hp-tp'), 600);
+            utilities.progress(100, $('.progress-bar--player-hp'), 600);
+            utilities.progress((player.EXP / player.EXPCap) * 100, $('.progress-bar--exp'), 600);
 
+            $('.player-hp--current').text(player.currentHP);
+            $('.player-hp--total').text(player.maxHP);
             $('#resurrect').fadeOut();
             $('#heal').show();
             $('#fight--monster').trigger('click');
@@ -382,35 +610,90 @@ game.events = (function () {
         $('#heal').on('click', function () {
             game.fight.doplayerHeal();
         })
+
+        $('.stats-toggle').on('click', function (e) {
+            var $this = $(e.currentTarget),
+                $statWrap = $this.next('.stats-wrap'),
+                statHeight = $statWrap.children('.stats-view').outerHeight();
+
+            if ($statWrap.hasClass('open')) {
+                $statWrap.height(0).removeClass('open');
+                $this.removeClass('open');
+            } else {
+                $statWrap.height(statHeight).addClass('open');
+                $this.addClass('open');
+            }
+        });
+
+        $('#train').on('click', function () {
+            var $this = $(this);
+
+            if ($this.hasClass('training--no')) {
+                $this.removeClass('training--no');
+                $(this).text('Stop Training').addClass('training--yes');
+                $('.monster-info, .fight-info').empty();
+                $('.fight-info').append('<div>Like a boss, you begin training on your own. <span class="training__percentage"></span></div>');
+                $('#fight--monster, #heal').hide();
+                $('.fight-info__toggle').text('See Training Details');
+                $('.fight-info__toggle').css('display', 'inline-block').trigger('click');
+
+                game.fight.doTraining();
+            } else {
+                $this.addClass('training--no');
+                clearInterval(trainingInterval);
+                $('#fight--monster, #heal').show();
+                $('.fight-info').append('<div>You stop training.</div>');
+                $this.text('Train');
+            }
+        });
+
+        $('.fight-info__toggle').on('click', function () {
+            var $this = $(this),
+                $fightInfo = $('.fight-info');
+
+            if ($this.hasClass('open')) {
+                $this.removeClass('open');
+                $fightInfo.slideUp();
+            } else {
+                $this.addClass('open');
+                $fightInfo.slideDown();
+            }            
+        })
     }
 
     function setEXP () {
-        var player = $.data(window, 'player');
-
         $('#exp-gauge').attr('data-exp', player.EXP);
-        game.utilities.progress((player.EXP / player.EXPCap) * 100, $('.progress-bar--exp'));
+        utilities.progress((player.EXP / player.EXPCap) * 100, $('.progress-bar--exp'));
     }
 
-    function createplayer () {
+    function createplayer () {        
         player = $.data(window, 'player', new player());
 
-        game.utilities.progress(100, $('.progress-bar--player'));
-        game.utilities.progress(100, $('.progress-bar--player-fatigue'));
-        $('#player-hp-current').text(player.currentHP);
-        $('#player-hp-total').text(player.maxHP);
-        $('.player-info__fatigue-count').text(player.fatigue + '/' + 100);
+        var $tpCount =  $('.player-info__tp-count'),
+            stats = '<li class="stats-view__HP"><h6>HP</h6>: ' + player.currentHP + '/' + player.maxHP +'</li>' +
+                '<li class="stats-view__damage"><h6>Damage</h6>: ' + player.stats.minDMG + ' - ' + player.stats.maxDMG + '</li>' +
+                '<li class="stats-view__weapon"><h6>Weapon</h6>: ' + player.gear.weapon.name + '</li>' +
+                '<li class="stats-view__traits"><h6>Traits</h6>: </li>';
 
-        $('#player-hp-total').fastCount(player.maxHP, 0, 1);
+        // Fill player HP and tp bars
+        utilities.progress(100, $('.progress-bar--player-hp'), 600);
+        utilities.progress(100, $('.progress-bar--player-hp-tp'), 600);
 
-        setInterval(function () {
-            player.fatigue += 10;
+        // Set up various labels
+        $('.player-hp--current').text(player.currentHP);
+        $('.player-hp--total').text(player.maxHP);
+        $('.player-info__name').text(player.name + ' (lvl.' + player.level + ')');
 
-            if (player.fatigue >=  10) $('#heal').prop('disabled', false);
-            if (player.fatigue > 100) player.fatigue = 100;
+        // Append stats element
+        $('.player-info__stats-view').append(stats);
 
-            game.utilities.progress(player.fatigue, $('.progress-bar--player-fatigue'), 500);
-            $('.player-info__fatigue-count').text(player.fatigue + '/100');
-        }, 10000);
+        // Iterate over traits and add to stats (todo: make this happen before appending, less DOM interaction)
+        for (i = 0; i < player.traits.length; i++) {
+            $('.player-info__stats-view .stats-view__traits').append(player.traits[i] + ' ');
+        }
+
+        // Fill tp bar
+        $tpCount.text(player.tp + '/' + 100);
     }
 
     return {
@@ -421,24 +704,32 @@ game.events = (function () {
 
 })();
 
-$(document).ready(function(){
+$(document).ready(function() {
     game.events.addUIEvents();
     game.events.createplayer();
     game.events.setEXP();
+
+    player = $.data(window, 'player'),
+    monster = {};
+
+    (function($) {
+        $.fn.slideFade = function(speed, distance) {
+            var that = this,
+                slideSpeed = speed || 400,
+                slideDistance = distance || 80;
+
+            setTimeout(function () {
+                that.animate({
+                    'right': '-' + distance + 'px',
+                    'opacity' : 0
+                }, slideSpeed, 'linear', function () {
+                    this.remove();
+                });
+            }, 50);
+            
+     
+            return this;
+        };
+     
+    }(jQuery));
 });
-
-
-(function( $ ) {
- 
-    $.fn.fastCount = function(sNum, eNum, increment) {
-        var counter = setInterval(function () {
-            this.text(sNum += sNum);
-        }, 5);
-
-        if (sNum >= eNum) {
-            clearInterval(counter);
-            this.text = eNum;
-        }
-    };
- 
-}( jQuery ));
